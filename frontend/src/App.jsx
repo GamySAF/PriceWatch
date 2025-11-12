@@ -6,6 +6,9 @@ import Navbar from "./components/Navbar";
 import AddProduct from "./components/addProductForm";
 import StatsSummary from "./components/statsSummary";
 import { Line } from "react-chartjs-2";
+import API from "../../backend/api";
+
+
 
 import {
   Chart as ChartJS,
@@ -49,6 +52,7 @@ function App() {
     },
   };
 
+
   const handleDeleteProduct = (indexToDelete) => {
     const confirmed = window.confirm(
       "Are you sure you want to delete this product?"
@@ -70,7 +74,7 @@ function App() {
     setProducts((prevProducts) =>
       prevProducts.map((p, i) => {
         if (i === indexToUpdate) {
-          const oldPrice = p.price;
+          const oldPrice = p.currentPrice;
           const percentChange = ((newPrice - oldPrice) / oldPrice) * 100;
           const roundedChange = Math.round(percentChange * 10) / 10;
 
@@ -94,14 +98,17 @@ function App() {
     );
   };
 
+
   function handleAddProduct(product) {
     const formattedProduct = {
       name: product.name,
       url: product.url,
-      price: Number(product.targetPrice),
+      targetPrice: Number(product.targetPrice),
+      currentPrice: Number(product.currentPrice),
       change: 0, // initial change
       history: [], // empty initially
     };
+    
     setProducts([...products, formattedProduct]);
     setShowForm(false);
     console.log("Tracked Product:", formattedProduct);
@@ -187,9 +194,15 @@ function App() {
     <h3 className="text-gray-800 dark:text-white font-semibold text-lg sm:text-xl md:text-2xl">
       {product.name}
     </h3>
-    <p className="text-lg sm:text-xl font-bold mt-1 text-gray-900 dark:text-gray-200">
-      ${product.price}
-    </p>
+    <div className="flex items-center gap-2  dark:px-3 py-2 rounded-xl shadow-sm">
+    <span className="text-gray-700 dark:text-gray-200 font-semibold">💰 Current Price:</span>
+    <span className="text-green-600 dark:text-green-300 font-bold">${product.currentPrice}</span>
+  </div>
+
+  <div className="flex items-center gap-2 dark: px-3 py-2 rounded-xl shadow-sm">
+    <span className="text-gray-700 dark:text-gray-200 font-semibold">🎯 Target Price:</span>
+    <span className="text-blue-600 dark:text-blue-300 font-bold">${product.targetPrice}</span>
+  </div>
 
     {/* View History Button */}
     <p

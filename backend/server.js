@@ -1,7 +1,10 @@
 const express = require('express');
 const app = express();
-app.use(express.json());
+const cors=require('cors')
 
+
+app.use(express.json());
+app.use(cors())
 // In-memory database
 let products = [];
 
@@ -30,6 +33,7 @@ app.post('/products', (req, res) => {
   products.push(newProduct);
   res.status(201).json(newProduct);
 });
+
 
 // 🔵 PUT update product (like when price changes)
 app.put('/products/:id', (req, res) => {

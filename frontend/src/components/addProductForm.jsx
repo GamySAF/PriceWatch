@@ -4,17 +4,19 @@ function AddProduct({ handleAddProduct }) {
   const [name, setName] = useState("");
   const [url, setUrl] = useState("");
   const [targetPrice, setTargetPrice] = useState("");
+  const [currentPrice,setCurrentPrice]=useState("")
 
   const handleSubmit = (e) => {
     e.preventDefault();
     if (!handleAddProduct) {
-      console.log({ name, url, targetPrice });
+      console.log({ name, url, targetPrice ,currentPrice});
     } else {
-      handleAddProduct({ name, url, targetPrice });
+      handleAddProduct({ name, url, targetPrice,currentPrice });
     }
     setName("");
     setUrl("");
     setTargetPrice("");
+    setCurrentPrice("")
   };
 
   return (
@@ -50,6 +52,16 @@ function AddProduct({ handleAddProduct }) {
           value={targetPrice}
           onChange={(e) => setTargetPrice(e.target.value)}
           required
+          className="px-4 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-400 
+                     dark:bg-gray-700 dark:border-gray-600 dark:text-white dark:placeholder-gray-400 dark:focus:ring-blue-500 transition-colors"
+        />
+
+            <input
+          type="text"
+          placeholder="current Price"
+          value={currentPrice}
+          onChange={(e) => setCurrentPrice(e.target.value)}
+          
           className="px-4 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-400 
                      dark:bg-gray-700 dark:border-gray-600 dark:text-white dark:placeholder-gray-400 dark:focus:ring-blue-500 transition-colors"
         />
