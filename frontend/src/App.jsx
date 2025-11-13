@@ -53,14 +53,18 @@ function App() {
   };
 
 
-  const handleDeleteProduct = (indexToDelete) => {
-    const confirmed = window.confirm(
-      "Are you sure you want to delete this product?"
-    );
-    if (confirmed) {
-      setProducts(products.filter((_, index) => index !== indexToDelete));
-    }
-  };
+const handleDeleteProduct = async (id) => {
+  const confirmed = window.confirm("Are you sure you want to delete this product?");
+  if (!confirmed) return;
+
+  try {
+    await API.delete(`/products/${id}`); // ✅ use id, not index
+    setProducts((prev) => prev.filter((p) => p.id !== id)); // ✅ filter by id
+  } catch (err) {
+    console.error("Failed to delete product:", err);
+  }
+};
+
 
   function handleToggleForm() {
     setShowForm((prev) => !prev);
@@ -251,7 +255,7 @@ useEffect(() => {
       Update Price
     </button>
     <button
-      onClick={() => handleDeleteProduct(index)}
+      onClick={() => handleDeleteProduct(product.id)}
       className="text-red-500 dark:text-red-400 hover:text-red-900 dark:hover:text-red-200 text-sm sm:text-md font-bold pl-2 sm:pl-4 transition-colors"
     >
       ✕
