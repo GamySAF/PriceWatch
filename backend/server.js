@@ -4,7 +4,7 @@ const cors=require('cors')
 
 
 app.use(express.json());
-app.use(cors())
+app.use(cors());
 // In-memory database
 let products = [];
 
@@ -47,11 +47,38 @@ app.put('/products/:id', (req, res) => {
     return res.status(404).json({ message: "Product not found" });
   }
 
-  // Update fields if provided
+  // Update simple fields
   if (req.body.name) product.name = req.body.name;
   if (req.body.url) product.url = req.body.url;
   if (req.body.targetPrice) product.targetPrice = req.body.targetPrice;
-  if (req.body.currentPrice) product.currentPrice = req.body.currentPrice;
+
+  // PRICE UPDATE LOGIC (fix)
+  const newPrice = Number(req.body.currentPrice);
+  const oldPrice = Number(product.currentPrice);
+
+  if (!isNaN(newPrice) && newPrice > 0) {
+    // only update history if old price exists
+    if (oldPrice && oldPrice > 0) {
+      const percentChange = ((newPrice - oldPrice) / oldPrice) * 100;
+      const rounded = Math.round(percentChange * 10) / 10;
+
+      const historyEntry = {
+        oldPrice,
+        newPrice,
+        change: rounded,
+        date: new Date().toLocaleString(),
+      };
+
+      // ensure history exists
+      if (!product.history) product.history = [];
+
+      product.history.push(historyEntry);
+      product.change = rounded;
+    }
+
+    // Finally update current price
+    product.currentPrice = newPrice;
+  }
 
   res.json(product);
 });

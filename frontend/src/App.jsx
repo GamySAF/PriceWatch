@@ -69,39 +69,62 @@ const handleDeleteProduct = async (id) => {
   function handleToggleForm() {
     setShowForm((prev) => !prev);
     console.log(showForm);
+
+
+
+
   }
+const handleUpdatePrice = async (product) => {
+  const newPrice = Number(prompt("Enter new price:"));
+  if (!newPrice) return;
 
-  const handleUpdatePrice = (indexToUpdate) => {
-    const newPrice = prompt("Enter new price:");
-    if (!newPrice || isNaN(newPrice)) return;
+  try {
+    const res = await API.put(`/products/${product.id}`, {
+      currentPrice: newPrice,
+    });
 
-    setProducts((prevProducts) =>
-      prevProducts.map((p, i) => {
-        if (i === indexToUpdate) {
-          const oldPrice = p.currentPrice;
-          const percentChange = ((newPrice - oldPrice) / oldPrice) * 100;
-          const roundedChange = Math.round(percentChange * 10) / 10;
-
-          // Create new history entry
-          const newHistoryEntry = {
-            oldPrice,
-            newPrice: Number(newPrice),
-            change: roundedChange,
-            date: new Date().toLocaleString(),
-          };
-
-          return {
-            ...p,
-            price: Number(newPrice),
-            change: roundedChange,
-           history: [...(p.history || []), newHistoryEntry],
-
-          };
-        }
-        return p;
-      })
+    setProducts((prev) =>
+      prev.map((p) => (p.id === product.id ? res.data : p))
     );
-  };
+  } catch (err) {
+    console.error("Update failed:", err);
+  }
+};
+
+// const handleUpdatePrice = (indexToUpdate) => {
+//   const newPrice = prompt("Enter new price:");
+//  if (oldPrice === null || isNaN(oldPrice)) return p; // safer
+
+
+//   setProducts((prevProducts) =>
+//     prevProducts.map((p, i) => {
+//       if (i === indexToUpdate) {
+//         const oldPrice = Number(p.currentPrice);  // ✔ correct field
+
+//         if (!oldPrice || oldPrice === 0) return p; // prevent Infinity
+
+//         const percentChange = ((newPrice - oldPrice) / oldPrice) * 100;
+//         const roundedChange = Math.round(percentChange * 10) / 10;
+
+//         const newHistoryEntry = {
+//           oldPrice,
+//           newPrice: Number(newPrice),
+//           change: roundedChange,
+//           date: new Date().toLocaleString(),
+//         };
+
+//         return {
+//           ...p,
+//           currentPrice: Number(newPrice),  // ✔ FIXED
+//           change: roundedChange,
+//           history: [...(p.history || []), newHistoryEntry],
+//         };
+//       }
+//       return p;
+//     })
+//   );
+// };
+
 
 
   const handleAddProduct = async (product) => {
@@ -249,7 +272,7 @@ useEffect(() => {
       {changeSymbol}
     </div>
     <button
-      onClick={() => handleUpdatePrice(index)}
+      onClick={() => handleUpdatePrice(product)}
       className="text-red-500 dark:text-red-400 hover:text-red-900 dark:hover:text-red-200 text-sm sm:text-md font-bold pl-2 sm:pl-4 transition-colors"
     >
       Update Price
@@ -306,8 +329,8 @@ useEffect(() => {
                 label: "Price",
                 data: [
                   selectedProduct.history.length > 0
-                    ? selectedProduct.history[0].oldPrice
-                    : selectedProduct.price,
+                    ? selectedProduct.history[0].oldPrice  
+                    : selectedProduct.price,   //change to current price
                   ...selectedProduct.history.map((h) => h.newPrice),
                 ],
                 borderColor: "rgba(59, 130, 246, 1)",

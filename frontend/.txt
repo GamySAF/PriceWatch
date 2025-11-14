@@ -1,0 +1,6 @@
+make the update price to update from backend also make the history what ever it backend
+
+
+
+
+line 312
