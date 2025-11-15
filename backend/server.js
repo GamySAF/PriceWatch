@@ -1,12 +1,21 @@
 const express = require('express');
 const app = express();
 const cors=require('cors')
+const connectDB=require('./config/db')
+
+require('dotenv').config();
 
 
 app.use(express.json());
 app.use(cors());
 // In-memory database
 let products = [];
+
+
+
+// Connect to MongoDB
+connectDB();
+
 
 // 🟢 GET all products
 app.get('/products', (req, res) => {

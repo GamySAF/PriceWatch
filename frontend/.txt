@@ -9,3 +9,192 @@ change the update price to update item or edit item and
 make the navbar sticky
 
 make the product update from realurl by using fetch
+
+next
+
+in server .js change the routes request to mongoodb 
+
+e.g app.get
+
+
+// GET all products
+app.get('/products', async (req, res) => {
+  try {
+    const products = await Product.find(); // fetch from DB
+    res.json(products);
+  } catch (err) {
+    res.status(500).json({ message: 'Server error' });
+  }
+});
+
+
+
+
+Perfect! Let’s map out the **full backend roadmap** from here **without notifications** — basically, a clean, production-ready backend with MongoDB, automatic price updates, and cron jobs. I’ll break it **step-by-step** from where you are now to the final deployment.
+
+---
+
+## **Backend Roadmap for Price Watcher (without notifications)**
+
+### **Step 1 — MongoDB Integration**
+
+✅ You already created `Product` model and connected MongoDB.
+**Next:**
+
+* Replace all in-memory `products` logic with MongoDB CRUD (I gave you the full `GET`, `POST`, `PUT`, `DELETE` routes).
+* Test that adding, updating, and deleting products works **persistently in MongoDB Atlas**.
+
+---
+
+### **Step 2 — Organize Project Structure**
+
+Recommended structure:
+
+```
+backend/
+ ├─ config/
+ │   └─ db.js         # MongoDB connection
+ ├─ models/
+ │   └─ Product.js    # Mongoose schema
+ ├─ routes/
+ │   └─ products.js   # CRUD routes
+ ├─ utils/
+ │   └─ scraper.js    # price scraping function
+ ├─ cron/
+ │   └─ cron.js       # cron job to auto-update prices
+ ├─ server.js         # main Express app
+ └─ .env
+```
+
+This keeps backend **clean and scalable**.
+
+---
+
+### **Step 3 — Price Scraper**
+
+* Create a function to fetch the current price from a product URL.
+* Save it in `utils/scraper.js`.
+
+Example:
+
+```js
+const axios = require('axios');
+const cheerio = require('cheerio');
+
+async function getPrice(url) {
+  try {
+    const { data } = await axios.get(url);
+    const $ = cheerio.load(data);
+
+    // Example for Amazon / customize for your sites:
+    let price = $('#priceblock_ourprice').text() || $('#priceblock_dealprice').text();
+    price = price.replace(/[^0-9.]/g, '');
+    return Number(price);
+  } catch (err) {
+    console.error('Scraper error:', err);
+    return null;
+  }
+}
+
+module.exports = getPrice;
+```
+
+---
+
+### **Step 4 — Cron Job**
+
+* Install `node-cron`: `npm i node-cron`
+* Create `cron/cron.js`:
+
+```js
+const cron = require('node-cron');
+const Product = require('../models/Product');
+const getPrice = require('../utils/scraper');
+
+function startCron() {
+  // Every hour
+  cron.schedule('0 * * * *', async () => {
+    console.log('Running price update cron job...');
+    const products = await Product.find();
+    for (let product of products) {
+      const newPrice = await getPrice(product.url);
+      if (newPrice && newPrice !== product.currentPrice) {
+        const oldPrice = product.currentPrice;
+        const change = Math.round(((newPrice - oldPrice) / oldPrice) * 10) / 10;
+
+        product.history.push({
+          oldPrice,
+          newPrice,
+          change,
+          date: new Date(),
+        });
+
+        product.currentPrice = newPrice;
+        product.change = change;
+
+        await product.save();
+        console.log(`Updated ${product.name}: ${newPrice}`);
+      }
+    }
+  });
+}
+
+module.exports = startCron;
+```
+
+* Call this cron in `server.js` after connecting DB:
+
+```js
+const startCron = require('./cron/cron');
+startCron();
+```
+
+---
+
+### **Step 5 — Test Cron Job Locally**
+
+* Run `npm run dev`
+* Check MongoDB to ensure prices and history are updated automatically every hour (or adjust frequency for testing).
+
+---
+
+### **Step 6 — Deploy Backend**
+
+1. Push backend to **Render / Railway / Fly.io**
+2. Set environment variables (`MONGO_URI`) in Render dashboard
+3. Start server (port automatically assigned by platform)
+4. Ensure **cron job runs in deployed environment**
+
+---
+
+### **Step 7 — Connect Frontend**
+
+* Update `API.js` in React to point to your deployed backend URL:
+
+```js
+const API = axios.create({
+  baseURL: 'https://your-backend-url.onrender.com',
+});
+```
+
+* Test all operations (add/edit/delete products, fetch products) via deployed backend.
+
+---
+
+### ✅ **Step 8 — Clean Up & Final Checks**
+
+* Remove any leftover `products = []` in memory.
+* Make sure **CORS** works with frontend deployment.
+* Ensure all edge cases (invalid URLs, scraping errors) are handled gracefully.
+* Optional: logging for cron jobs.
+
+---
+
+After this, your backend is **fully functional**, auto-updating prices in MongoDB, and ready for deployment.
+
+---
+
+If you want, I can **rewrite your `server.js` fully with MongoDB + cron job**, ready to paste and deploy. This will save you tons of time and mistakes.
+
+Do you want me to do that next?
+
