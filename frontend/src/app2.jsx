@@ -44,9 +44,6 @@ const handleAddProduct = (product) => {
       )}
 <div className="w-full px-4 sm:px-6 lg:px-8 mt-8 space-y-4">
 
-  {/* Stats Summary at the top */}
-  {/* <StatsSummary totalItems={products.length} avgChange={-1.5} /> */}
-
   {/* Product List */}
   {products.map((product, index) => {
     const isPositive = product.change > 0;
