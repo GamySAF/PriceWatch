@@ -2,6 +2,7 @@ const express = require('express');
 const app = express();
 const cors=require('cors')
 const connectDB=require('./config/db')
+const product=require('./models/product')
 
 require('dotenv').config();
 
@@ -9,7 +10,7 @@ require('dotenv').config();
 app.use(express.json());
 app.use(cors());
 // In-memory database
-let products = [];
+
 
 
 
@@ -18,90 +19,107 @@ connectDB();
 
 
 // 🟢 GET all products
-app.get('/products', (req, res) => {
-  res.json(products); // send back all products as JSON
+// 🟢 GET all products
+app.get('/products', async (req, res) => {
+  try {
+    const products = await Product.find(); // fetch all products from MongoDB
+    res.json(products); // send them as JSON
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ message: "Server error" });
+  }
 });
 
 
 // 🟡 POST add new product
-app.post('/products', (req, res) => {
+// 🟡 POST add new product
+app.post('/products', async (req, res) => {
   const { name, url, targetPrice, currentPrice } = req.body;
 
   if (!name || !url || !targetPrice) {
     return res.status(400).json({ message: "Name, URL, and targetPrice are required!" });
   }
 
-const newProduct = {
-  id: products.length + 1,
-  name,
-  url,
-  targetPrice,
-  currentPrice: currentPrice || null,
-  change: 0,       // start at 0% change
-  history: []      // always start with empty history
-};
+  try {
+    const newProduct = new Product({
+      name,
+      url,
+      targetPrice,
+      currentPrice: currentPrice || null,
+      change: 0,   // start at 0% change
+      history: []  // empty history
+    });
 
-
-  products.push(newProduct);
-  res.status(201).json(newProduct);
+    const savedProduct = await newProduct.save(); // save to MongoDB
+    res.status(201).json(savedProduct);
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ message: "Failed to add product" });
+  }
 });
 
 
-// 🔵 PUT update product (like when price changes)
-app.put('/products/:id', (req, res) => {
-  const id = parseInt(req.params.id);
-  const product = products.find(p => p.id === id);
+// 🔵 PUT update product (price or other fields)
+app.put('/products/:id', async (req, res) => {
+  const { id } = req.params;
+  const { name, url, targetPrice, currentPrice } = req.body;
 
-  if (!product) {
-    return res.status(404).json({ message: "Product not found" });
-  }
+  try {
+    const product = await Product.findById(id);
+    if (!product) return res.status(404).json({ message: "Product not found" });
 
-  // Update simple fields
-  if (req.body.name) product.name = req.body.name;
-  if (req.body.url) product.url = req.body.url;
-  if (req.body.targetPrice) product.targetPrice = req.body.targetPrice;
+    // Update simple fields
+    if (name) product.name = name;
+    if (url) product.url = url;
+    if (targetPrice) product.targetPrice = targetPrice;
 
-  // PRICE UPDATE LOGIC (fix)
-  const newPrice = Number(req.body.currentPrice);
-  const oldPrice = Number(product.currentPrice);
+    // Update price & history
+    if (currentPrice && currentPrice > 0) {
+      const oldPrice = product.currentPrice || 0;
+      const newPrice = Number(currentPrice);
 
-  if (!isNaN(newPrice) && newPrice > 0) {
-    // only update history if old price exists
-    if (oldPrice && oldPrice > 0) {
-      const percentChange = ((newPrice - oldPrice) / oldPrice) * 100;
-      const rounded = Math.round(percentChange * 10) / 10;
+      if (oldPrice > 0) {
+        const percentChange = ((newPrice - oldPrice) / oldPrice) * 100;
+        const roundedChange = Math.round(percentChange * 10) / 10;
 
-      const historyEntry = {
-        oldPrice,
-        newPrice,
-        change: rounded,
-        date: new Date().toLocaleString(),
-      };
+        product.history.push({
+          oldPrice,
+          newPrice,
+          change: roundedChange,
+          date: new Date()
+        });
 
-      // ensure history exists
-      if (!product.history) product.history = [];
+        product.change = roundedChange;
+      }
 
-      product.history.push(historyEntry);
-      product.change = rounded;
+      product.currentPrice = newPrice;
     }
 
-    // Finally update current price
-    product.currentPrice = newPrice;
-  }
+    const updatedProduct = await product.save();
+    res.json(updatedProduct);
 
-  res.json(product);
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ message: "Failed to update product" });
+  }
 });
+
 
 // 🔴 DELETE remove product
-app.delete('/products/:id', (req, res) => {
-  const id = parseInt(req.params.id);
-  const product = products.find(p => p.id === id);
+app.delete('/products/:id', async (req, res) => {
+  const { id } = req.params;
 
-  if (!product) return res.status(404).json({ message: "Product not found" });
+  try {
+    const product = await Product.findByIdAndDelete(id);
+    if (!product) return res.status(404).json({ message: "Product not found" });
 
-  products = products.filter(p => p.id !== id);
-  res.json({ message: "Product deleted successfully" });
+    res.json({ message: "Product deleted successfully" });
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ message: "Failed to delete product" });
+  }
 });
+
 
 // 🚀 Start server
 app.listen(3000, () => {
