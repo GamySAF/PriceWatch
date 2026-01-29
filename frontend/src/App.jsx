@@ -234,7 +234,16 @@ const Dashboard = () => (
                   <span className="text-slate-500 dark:text-gray-200">💰 Current: <span className="text-green-600 font-bold">${product.currentPrice}</span></span>
                   <span className="text-slate-500 dark:text-gray-200">🎯 Target: <span className="text-blue-600 font-bold">${product.targetPrice}</span></span>
                 </div>
-                <p className="text-blue-500 cursor-pointer text-sm mt-2" onClick={() => setSelectedProduct(product)}>View History</p>
+                <p 
+  className="text-blue-500 cursor-pointer text-sm mt-2 font-medium hover:underline" 
+  onClick={() => {
+    if (checkAuth()) {
+      setSelectedProduct(product);
+    }
+  }}
+>
+  View History
+</p>
               </div>
               
               <div className="flex items-center gap-2 mt-3 sm:mt-0">
