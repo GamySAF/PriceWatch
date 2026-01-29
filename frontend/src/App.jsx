@@ -51,9 +51,12 @@ const handleLogout = () => {
     setUserName("");
     setProducts([]);
   };
-
-  // --- EXISTING LOGIC (Unchanged) ---
+// --- EXISTING LOGIC (Updated with Guest Checks) ---
   const handleUpdateProduct = async (updatedProduct) => {
+    if (!token) {
+      alert("Guest Mode: You cannot save changes. Please login to edit products!");
+      return;
+    }
     try {
       const res = await API.put(`/products/${editingProduct._id}`, updatedProduct);
       setProducts((prev) => prev.map((p) => (p._id === editingProduct._id ? res.data : p)));
@@ -62,21 +65,26 @@ const handleLogout = () => {
     } catch (err) { console.error("Update failed:", err); }
   };
 
- const handleDeleteProduct = async (id) => {
-  if (!window.confirm("Are you sure?")) return;
-  try {
-    // Ensure this matches your backend route exactly!
-    await API.delete(`/products/${id}`); 
-    
-    // Update local state so the item disappears immediately
-    setProducts((prev) => prev.filter((p) => p._id !== id));
-  } catch (err) { 
-    console.error("Failed to delete:", err); 
-    alert("Delete failed: " + (err.response?.data?.message || "Server error"));
-  }
-};
+  const handleDeleteProduct = async (id) => {
+    if (!token) {
+      alert("Guest Mode: You cannot delete sample products. Please login!");
+      return;
+    }
+    if (!window.confirm("Are you sure?")) return;
+    try {
+      await API.delete(`/products/${id}`); 
+      setProducts((prev) => prev.filter((p) => p._id !== id));
+    } catch (err) { 
+      console.error("Failed to delete:", err); 
+      alert("Delete failed: " + (err.response?.data?.message || "Server error"));
+    }
+  };
 
   const handleAddProduct = async (product) => {
+    if (!token) {
+      alert("Guest Mode: Please login or sign up to track your own products!");
+      return;
+    }
     const formattedProduct = { ...product, targetPrice: Number(product.targetPrice), currentPrice: Number(product.currentPrice), change: 0, history: [] };
     try {
       const res = await API.post("/products", formattedProduct);
@@ -86,6 +94,10 @@ const handleLogout = () => {
   };
 
   const handleEditProduct = (product) => {
+        if (!token) {
+      alert("Guest Mode: Please login or sign up to track your own products!");
+      return;
+    }
     setEditingProduct(product);
     setShowForm(true);
   };
@@ -97,26 +109,32 @@ const handleLogout = () => {
     localStorage.setItem("theme", theme);
   }, [theme]);
 
-  useEffect(() => {
-    if (!token) return;
- const fetchProducts = async () => {
-  try {
-    const token = localStorage.getItem("token"); 
-    if (!token) return; 
-
-    const res = await axios.get("https://pricewatch-4n3q.onrender.com/products", {
-      headers: {
-        // This is the "ID badge" the backend needs to see
-        Authorization: `Bearer ${token}` 
+useEffect(() => {
+  const fetchProducts = async () => {
+    try {
+      // Use the 'token' variable from your state
+      if (!token) {
+        // --- GUEST MODE: Show Dummy Data ---
+        setProducts([
+          { _id: '1', name: 'Sample Rolex Watch', currentPrice: 12000, targetPrice: 10000, change: -2.5, history: [] },
+          { _id: '2', name: 'Sample Nike Dunk Low', currentPrice: 110, targetPrice: 90, change: 5.2, history: [] },
+          { _id: '3', name: 'Sample MacBook Pro M3', currentPrice: 1999, targetPrice: 1750, change: 0, history: [] }
+        ]);
+        return;
       }
-    });
-    setProducts(res.data);
-  } catch (err) {
-    console.error("Failed to fetch products:", err);
-  }
-};
-fetchProducts()
-  }, [token]);
+
+      // --- USER MODE: Fetch Real Data ---
+      const res = await axios.get("https://pricewatch-4n3q.onrender.com/products", {
+        headers: { Authorization: `Bearer ${token}` }
+      });
+      setProducts(res.data);
+    } catch (err) {
+      console.error("Failed to fetch products:", err);
+    }
+  };
+
+  fetchProducts();
+}, [token]); // Runs whenever the user logs in or out
 
   const totalChange = products.reduce((acc, p) => acc + (Number(p.change) || 0), 0);
   const avgChange = products.length ? Math.round((totalChange / products.length) * 10) / 10 : 0;
@@ -124,8 +142,20 @@ fetchProducts()
   // --- RENDER HELPERS ---
   const Dashboard = () => (
     <div className="min-h-screen bg-gray-100 dark:bg-gray-900 transition-colors duration-300">
-      <Navbar theme={theme} toggleTheme={toggleTheme} onAddProductClick={() => setShowForm(true)} onLogout={handleLogout} userName={userName} />
-      
+<Navbar 
+  theme={theme} 
+  toggleTheme={toggleTheme} 
+  onAddProductClick={() => {
+    if (!token) {
+      alert("Guest Mode: Please login to add your own products!");
+    } else {
+      setShowForm(true);
+    }
+  }}
+  onLogout={handleLogout} 
+  userName={userName} 
+  token={token} // 👈 Add this so Navbar knows if someone is logged in
+/>
       {showForm && (
         <div className="fixed inset-0 bg-black bg-opacity-50 flex justify-center items-center z-50 p-4 overflow-auto">
           <div className="bg-white rounded-xl p-4 sm:p-6 w-full max-w-sm sm:max-w-md relative shadow-lg border dark:bg-gray-900 dark:border-white">
@@ -177,26 +207,27 @@ fetchProducts()
     </div>
   );
 
-  return (
+  return  (
   <Router>
     <Routes>
       <Route path="/signup" element={<Signup />} />
-  <Route path="/login" element={<Login setToken={(data) => {
-    localStorage.setItem("token", data.token);
-    localStorage.setItem("userName", data.user.name);
-    
-    setToken(data.token);
-    setUserName(data.user.name); // 👈 Add this line!
-}} />} />
-     
-      {/* This makes the dashboard show up at the root URL */}
-    <Route path="/" element={<ProtectedRoute><Dashboard /></ProtectedRoute>} />
-    
-    {/* This makes the dashboard (or a specific Product list) show up at /products */}
-    <Route path="/products" element={<ProtectedRoute><Dashboard /></ProtectedRoute>} />
+      <Route path="/login" element={<Login setToken={(data) => {
+          localStorage.setItem("token", data.token);
+          localStorage.setItem("userName", data.user.name);
+          setToken(data.token);
+          setUserName(data.user.name);
+      }} />} />
+      
+      {/* REMOVED ProtectedRoute from "/" 
+         Now guests can see the Dashboard with dummy data!
+      */}
+      <Route path="/" element={<Dashboard />} />
+      
+      {/* Keep this protected if you want a specific hidden URL */}
+      <Route path="/products" element={<ProtectedRoute><Dashboard /></ProtectedRoute>} />
     </Routes>
   </Router>
-  );
+);
 }
 
 export default App;
