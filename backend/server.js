@@ -167,29 +167,31 @@ app.put('/products/:id', auth, async (req, res) => {
 //     res.status(500).json({ message: "Failed to update product" });
 //   }
 // });
-// // 🔴 DELETE remove product (Secure Version)
-// app.delete('/products/:id', auth, async (req, res) => {
-//   const { id } = req.params;
 
-//   try {
-//     // We search for the product by ID AND ensure the owner is the current user
-//     const deletedProduct = await Product.findOneAndDelete({ 
-//       _id: id, 
-//       owner: req.userId 
-//     });
 
-//     if (!deletedProduct) {
-//       return res.status(404).json({ 
-//         message: "Product not found or you do not have permission to delete it" 
-//       });
-//     }
+// 🔴 DELETE remove product (Secure Version)
+app.delete('/products/:id', auth, async (req, res) => {
+  const { id } = req.params;
 
-//     res.json({ message: "Product deleted successfully" });
-//   } catch (err) {
-//     console.error(err);
-//     res.status(500).json({ message: "Failed to delete product" });
-//   }
-// });
+  try {
+    // We search for the product by ID AND ensure the owner is the current user
+    const deletedProduct = await Product.findOneAndDelete({ 
+      _id: id, 
+      owner: req.userId 
+    });
+
+    if (!deletedProduct) {
+      return res.status(404).json({ 
+        message: "Product not found or you do not have permission to delete it" 
+      });
+    }
+
+    res.json({ message: "Product deleted successfully" });
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ message: "Failed to delete product" });
+  }
+});
 
 
 
