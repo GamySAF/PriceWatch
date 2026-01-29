@@ -3,9 +3,11 @@ import { BrowserRouter as Router, Routes, Route, Navigate } from "react-router-d
 import Navbar from "./components/Navbar";
 import AddProduct from "./components/addProductForm";
 import StatsSummary from "./components/statsSummary";
-import Login from "./components/Login"; // We'll create this next
-import Signup from "./components/Signup"; // We'll create this next
-import { Line } from "react-chartjs-2";
+// Change these to lowercase to match your actual files
+import Login from "./components/login"; 
+import Signup from "./components/signup";
+import AddProduct from "./components/addProductForm"; // Check if 'A' is capital in the filename!
+
 import API from "./api";
 
 import axios from 'axios';
