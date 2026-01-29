@@ -69,8 +69,11 @@ function AddProduct({ handleAddProduct, initialData = null, isEditing = false, o
                      dark:bg-gray-700 dark:border-gray-600 dark:text-white dark:placeholder-gray-400 dark:focus:ring-blue-500 transition-colors"
         />
 
+
+
         <input
-          type="text"
+          type="number" // 🟢 Changes the keyboard to numeric on mobile
+ 
           placeholder="Target Price"
           value={targetPrice}
           onChange={(e) => setTargetPrice(e.target.value)}
@@ -80,7 +83,8 @@ function AddProduct({ handleAddProduct, initialData = null, isEditing = false, o
         />
 
         <input
-          type="text"
+            type="number" // 🟢 Changes the keyboard to numeric on mobile
+
           placeholder="Current Price"
           value={currentPrice}
           onChange={(e) => setCurrentPrice(e.target.value)}
