@@ -1,51 +1,116 @@
 import React, { useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import API from "../api";
+import toast from "react-hot-toast"; 
 
 const Login = ({ setToken }) => {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
+  const [loading, setLoading] = useState(false); 
   const navigate = useNavigate();
-const handleSubmit = async (e) => {
-  e.preventDefault();
-  try {
-    // Clear old errors
-  
 
-    const res = await API.post("/login", { email, password });
+  const handleSubmit = async (e) => {
+    e.preventDefault();
+    setLoading(true);
+    try {
+      const res = await API.post("/login", { email, password });
 
-    if (res.data && res.data.token) {
-      // 1. Save to storage
-      localStorage.setItem("token", res.data.token);
-      localStorage.setItem("userName", res.data.user.name);
-
-      // 2. Update App.jsx state
-      setToken(res.data); 
-
-      // 3. Go to dashboard
-      navigate("/");
+      if (res.data && res.data.token) {
+        localStorage.setItem("token", res.data.token);
+        localStorage.setItem("userName", res.data.user.name);
+        setToken(res.data);
+        toast.success(`Welcome back, ${res.data.user.name}!`);
+        navigate("/");
+      }
+    } catch (err) {
+      console.error("Login Error:", err.response?.data);
+      toast.error(err.response?.data?.message || "Invalid Email or Password");
+    } finally {
+      setLoading(false);
     }
-  } catch (err) {
-    console.error("Login Error:", err.response?.data);
-    alert(err.response?.data?.message || "Invalid Email or Password");
-  }
-};
+  };
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-gray-100 dark:bg-gray-900 px-4">
-      <form onSubmit={handleSubmit} className="bg-white dark:bg-gray-800 p-8 rounded-2xl shadow-lg w-full max-w-md border dark:border-gray-700">
-        <h2 className="text-3xl font-bold mb-6 text-center dark:text-white">Welcome Back</h2>
-        <input type="email" placeholder="Email" className="w-full p-3 mb-4 border rounded-xl dark:bg-gray-700 dark:text-white" 
-          onChange={(e) => setEmail(e.target.value)} required />
-        <input type="password" placeholder="Password" className="w-full p-3 mb-6 border rounded-xl dark:bg-gray-700 dark:text-white" 
-          onChange={(e) => setPassword(e.target.value)} required />
-        <button type="submit" className="w-full bg-blue-600 text-white p-3 rounded-xl font-bold hover:bg-blue-700 transition shadow-lg">
-          Login
-        </button>
-        <p className="mt-4 text-center dark:text-gray-300">
-          New here? <Link to="/signup" className="text-blue-500 font-semibold">Create an account</Link>
+    <div className="min-h-screen flex items-center justify-center bg-[#F8FAFC] dark:bg-[#0F172A] px-6 transition-colors duration-300">
+      {/* Decorative Background Blur */}
+      <div className="absolute top-1/4 left-1/4 w-64 h-64 bg-blue-400/10 blur-[100px] rounded-full"></div>
+      <div className="absolute bottom-1/4 right-1/4 w-64 h-64 bg-indigo-400/10 blur-[100px] rounded-full"></div>
+
+      {/* Reduced max-w-md to max-w-sm for a tighter look */}
+      <div className="relative w-full max-w-sm"> 
+        <form 
+          onSubmit={handleSubmit} 
+          /* Changed p-10 to py-7 px-8 to reduce height/size */
+          className="bg-white/80 dark:bg-slate-800/80 backdrop-blur-xl py-7 px-8 rounded-3xl shadow-[0_20px_50px_rgba(0,0,0,0.05)] dark:shadow-[0_20px_50px_rgba(0,0,0,0.3)] border border-white dark:border-slate-700 w-full transition-all"
+        >
+          {/* Header - Reduced mb-10 to mb-6 */}
+          <div className="text-center mb-6">
+            <h2 className="text-2xl font-extrabold text-slate-800 dark:text-white tracking-tight">
+              Welcome Back
+            </h2>
+            <p className="text-slate-500 dark:text-slate-400 mt-1 text-sm">
+              Enter your details to sign in.
+            </p>
+          </div>
+
+          {/* Space-y-5 reduced to space-y-4 */}
+          <div className="space-y-4"> 
+            {/* Email Input */}
+            <div>
+              <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1 ml-1">
+                Email Address
+              </label>
+              <input 
+                type="email" 
+                placeholder="name@company.com" 
+                className="w-full p-3 bg-slate-50 dark:bg-slate-900/50 border border-slate-200 dark:border-slate-700 rounded-2xl focus:ring-2 focus:ring-blue-500 focus:border-transparent outline-none transition-all dark:text-white text-sm" 
+                onChange={(e) => setEmail(e.target.value)} 
+                required 
+              />
+            </div>
+
+            {/* Password Input */}
+            <div>
+              <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1 ml-1">
+                Password
+              </label>
+              <input 
+                type="password" 
+                placeholder="••••••••" 
+                className="w-full p-3 bg-slate-50 dark:bg-slate-900/50 border border-slate-200 dark:border-slate-700 rounded-2xl focus:ring-2 focus:ring-blue-500 focus:border-transparent outline-none transition-all dark:text-white text-sm" 
+                onChange={(e) => setPassword(e.target.value)} 
+                required 
+              />
+            </div>
+          </div>
+
+          {/* Submit Button - Reduced p-4 to p-3 */}
+          <button 
+            type="submit" 
+            disabled={loading}
+            className={`w-full mt-6 bg-blue-600 hover:bg-blue-700 text-white p-3 rounded-2xl font-bold transition-all transform active:scale-[0.98] shadow-lg shadow-blue-500/25 flex justify-center items-center ${loading ? 'opacity-70 cursor-not-allowed' : ''}`}
+          >
+            {loading ? (
+              <div className="w-6 h-6 border-2 border-white/30 border-t-white rounded-full animate-spin"></div>
+            ) : (
+              "Sign In"
+            )}
+          </button>
+
+          {/* Footer - Reduced mt-8 to mt-6 */}
+          <p className="mt-6 text-center text-sm text-slate-600 dark:text-slate-400">
+            Don't have an account?{" "}
+            <Link to="/signup" className="text-blue-500 hover:text-blue-600 font-bold underline-offset-4 hover:underline">
+              Sign up
+            </Link>
+          </p>
+        </form>
+        
+        {/* Subtle Brand Note */}
+        <p className="text-center mt-5 text-slate-400 dark:text-slate-500 text-[10px] tracking-widest uppercase">
+          Secured by PriceWatch Auth
         </p>
-      </form>
+      </div>
     </div>
   );
 };

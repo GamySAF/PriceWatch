@@ -1,41 +1,123 @@
 import React, { useState } from "react";
-import { useNavigate, Link } from "react-router-dom";
+import { Link, useNavigate } from "react-router-dom";
 import API from "../api";
+import toast from "react-hot-toast";
 
 const Signup = () => {
-  const [formData, setFormData] = useState({ name: "", email: "", password: "" });
+  const [name, setName] = useState("");
+  const [email, setEmail] = useState("");
+  const [password, setPassword] = useState("");
+  const [loading, setLoading] = useState(false);
   const navigate = useNavigate();
 
   const handleSubmit = async (e) => {
     e.preventDefault();
+    setLoading(true);
     try {
-      // Changed from /auth/signup to /signup to match your backend
-      await API.post("/signup", formData);
-      alert("Account created successfully! Please login.");
-      navigate("/login");
+      const res = await API.post("/signup", { name, email, password });
+      if (res.data) {
+        toast.success("Account created! Please login.");
+        navigate("/login");
+      }
     } catch (err) {
-      // Your backend returns { error: "..." }
-      alert(err.response?.data?.error || "Signup failed");
+      console.error("Signup Error:", err.response?.data);
+      toast.error(err.response?.data?.message || "Registration failed");
+    } finally {
+      setLoading(false);
     }
   };
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-gray-100 dark:bg-gray-900 px-4">
-      <form onSubmit={handleSubmit} className="bg-white dark:bg-gray-800 p-8 rounded-2xl shadow-lg w-full max-w-md border dark:border-gray-700">
-        <h2 className="text-3xl font-bold mb-6 text-center dark:text-white">Join PriceWatch</h2>
-        <input type="text" placeholder="Full Name" className="w-full p-3 mb-4 border rounded-xl dark:bg-gray-700 dark:text-white" 
-          onChange={(e) => setFormData({...formData, name: e.target.value})} required />
-        <input type="email" placeholder="Email" className="w-full p-3 mb-4 border rounded-xl dark:bg-gray-700 dark:text-white" 
-          onChange={(e) => setFormData({...formData, email: e.target.value})} required />
-        <input type="password" placeholder="Password" className="w-full p-3 mb-6 border rounded-xl dark:bg-gray-700 dark:text-white" 
-          onChange={(e) => setFormData({...formData, password: e.target.value})} required />
-        <button type="submit" className="w-full bg-green-600 text-white p-3 rounded-xl font-bold hover:bg-green-700 transition shadow-lg">
-          Sign Up
-        </button>
-        <p className="mt-4 text-center dark:text-gray-300">
-          Already have an account? <Link to="/login" className="text-blue-500 font-semibold">Login</Link>
+    <div className="min-h-screen flex items-center justify-center bg-[#F8FAFC] dark:bg-[#0F172A] px-6 transition-colors duration-300">
+      {/* Decorative Background Blur */}
+      <div className="absolute top-1/4 left-1/4 w-64 h-64 bg-blue-400/10 blur-[100px] rounded-full"></div>
+      <div className="absolute bottom-1/4 right-1/4 w-64 h-64 bg-indigo-400/10 blur-[100px] rounded-full"></div>
+
+      <div className="relative w-full max-w-sm">
+        <form 
+          onSubmit={handleSubmit} 
+          className="bg-white/80 dark:bg-slate-800/80 backdrop-blur-xl py-7 px-8 rounded-3xl shadow-[0_20px_50px_rgba(0,0,0,0.05)] dark:shadow-[0_20px_50px_rgba(0,0,0,0.3)] border border-white dark:border-slate-700 w-full transition-all"
+        >
+          {/* Header */}
+          <div className="text-center mb-6">
+            <h2 className="text-2xl font-extrabold text-slate-800 dark:text-white tracking-tight">
+              Create Account
+            </h2>
+            <p className="text-slate-500 dark:text-slate-400 mt-1 text-sm">
+              Join PriceWatch Tracker today.
+            </p>
+          </div>
+
+          <div className="space-y-4">
+            {/* Name Input */}
+            <div>
+              <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1 ml-1">
+                Full Name
+              </label>
+              <input 
+                type="text" 
+                placeholder="John Doe" 
+                className="w-full p-3 bg-slate-50 dark:bg-slate-900/50 border border-slate-200 dark:border-slate-700 rounded-2xl focus:ring-2 focus:ring-blue-500 outline-none transition-all dark:text-white text-sm" 
+                onChange={(e) => setName(e.target.value)} 
+                required 
+              />
+            </div>
+
+            {/* Email Input */}
+            <div>
+              <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1 ml-1">
+                Email Address
+              </label>
+              <input 
+                type="email" 
+                placeholder="name@company.com" 
+                className="w-full p-3 bg-slate-50 dark:bg-slate-900/50 border border-slate-200 dark:border-slate-700 rounded-2xl focus:ring-2 focus:ring-blue-500 outline-none transition-all dark:text-white text-sm" 
+                onChange={(e) => setEmail(e.target.value)} 
+                required 
+              />
+            </div>
+
+            {/* Password Input */}
+            <div>
+              <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1 ml-1">
+                Password
+              </label>
+              <input 
+                type="password" 
+                placeholder="••••••••" 
+                className="w-full p-3 bg-slate-50 dark:bg-slate-900/50 border border-slate-200 dark:border-slate-700 rounded-2xl focus:ring-2 focus:ring-blue-500 outline-none transition-all dark:text-white text-sm" 
+                onChange={(e) => setPassword(e.target.value)} 
+                required 
+              />
+            </div>
+          </div>
+
+          {/* Submit Button */}
+          <button 
+            type="submit" 
+            disabled={loading}
+            className={`w-full mt-6 bg-blue-600 hover:bg-blue-700 text-white p-3 rounded-2xl font-bold transition-all transform active:scale-[0.98] shadow-lg shadow-blue-500/25 flex justify-center items-center ${loading ? 'opacity-70 cursor-not-allowed' : ''}`}
+          >
+            {loading ? (
+              <div className="w-6 h-6 border-2 border-white/30 border-t-white rounded-full animate-spin"></div>
+            ) : (
+              "Get Started"
+            )}
+          </button>
+
+          {/* Footer */}
+          <p className="mt-6 text-center text-sm text-slate-600 dark:text-slate-400">
+            Already have an account?{" "}
+            <Link to="/login" className="text-blue-500 hover:text-blue-600 font-bold underline-offset-4 hover:underline">
+              Sign in
+            </Link>
+          </p>
+        </form>
+        
+        <p className="text-center mt-5 text-slate-400 dark:text-slate-500 text-[10px] tracking-widest uppercase">
+          Secured by PriceWatch Auth
         </p>
-      </form>
+      </div>
     </div>
   );
 };
