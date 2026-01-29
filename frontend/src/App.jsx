@@ -8,6 +8,8 @@ import Signup from "./components/Signup"; // We'll create this next
 import { Line } from "react-chartjs-2";
 import API from "./api";
 
+import axios from 'axios';
+
 import {
   Chart as ChartJS,
   CategoryScale,
@@ -35,13 +37,16 @@ function App() {
   const [products, setProducts] = useState([]);
   const [editingProduct, setEditingProduct] = useState(null);
   const [theme, setTheme] = useState(() => localStorage.getItem("theme") || "light");
+  const [token, setToken] = useState(localStorage.getItem("token"));
+  const [userName, setUserName] = useState(localStorage.getItem("userName") || "");
 
   // Auth State
-  const [token, setToken] = useState(localStorage.getItem("token"));
 
-  const handleLogout = () => {
+const handleLogout = () => {
     localStorage.removeItem("token");
+    localStorage.removeItem("userName"); // Clear it on logout!
     setToken(null);
+    setUserName("");
     setProducts([]);
   };
 
@@ -92,13 +97,23 @@ function App() {
 
   useEffect(() => {
     if (!token) return;
-    const fetchProducts = async () => {
-      try {
-        const res = await API.get("/products");
-        setProducts(res.data);
-      } catch (err) { console.error("Failed to fetch products:", err); }
-    };
-    fetchProducts();
+ const fetchProducts = async () => {
+  try {
+    const token = localStorage.getItem("token"); 
+    if (!token) return; 
+
+    const res = await axios.get("https://pricewatch-4n3q.onrender.com/products", {
+      headers: {
+        // This is the "ID badge" the backend needs to see
+        Authorization: `Bearer ${token}` 
+      }
+    });
+    setProducts(res.data);
+  } catch (err) {
+    console.error("Failed to fetch products:", err);
+  }
+};
+fetchProducts()
   }, [token]);
 
   const totalChange = products.reduce((acc, p) => acc + (Number(p.change) || 0), 0);
@@ -107,7 +122,7 @@ function App() {
   // --- RENDER HELPERS ---
   const Dashboard = () => (
     <div className="min-h-screen bg-gray-100 dark:bg-gray-900 transition-colors duration-300">
-      <Navbar theme={theme} toggleTheme={toggleTheme} onAddProductClick={() => setShowForm(true)} onLogout={handleLogout} />
+      <Navbar theme={theme} toggleTheme={toggleTheme} onAddProductClick={() => setShowForm(true)} onLogout={handleLogout} userName={userName} />
       
       {showForm && (
         <div className="fixed inset-0 bg-black bg-opacity-50 flex justify-center items-center z-50 p-4 overflow-auto">
@@ -164,7 +179,13 @@ function App() {
   <Router>
     <Routes>
       <Route path="/signup" element={<Signup />} />
-     <Route path="/login" element={<Login setToken={setToken} />} />
+  <Route path="/login" element={<Login setToken={(data) => {
+    localStorage.setItem("token", data.token);
+    localStorage.setItem("userName", data.user.name);
+    
+    setToken(data.token);
+    setUserName(data.user.name); // 👈 Add this line!
+}} />} />
      
       {/* This makes the dashboard show up at the root URL */}
     <Route path="/" element={<ProtectedRoute><Dashboard /></ProtectedRoute>} />

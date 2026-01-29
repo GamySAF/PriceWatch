@@ -6,25 +6,28 @@ const Login = ({ setToken }) => {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const navigate = useNavigate();
-
 const handleSubmit = async (e) => {
   e.preventDefault();
   try {
-    // 1. Send the actual state variables
-    const res = await API.post("/login", { email, password });
-    
-    // 2. Save to localStorage
-    localStorage.setItem("token", res.data.token);
-    localStorage.setItem("user", JSON.stringify(res.data.user));
+    // Clear old errors
+  
 
-    // 3. Update the App state if you're using setToken
-    if (setToken) setToken(res.data.token);
-navigate("/"); 
-    alert("Login successful!");
-    
+    const res = await API.post("/login", { email, password });
+
+    if (res.data && res.data.token) {
+      // 1. Save to storage
+      localStorage.setItem("token", res.data.token);
+      localStorage.setItem("userName", res.data.user.name);
+
+      // 2. Update App.jsx state
+      setToken(res.data); 
+
+      // 3. Go to dashboard
+      navigate("/");
+    }
   } catch (err) {
-    // Your backend returns { message: "..." } for errors
-    alert(err.response?.data?.message || "Login failed. Check your credentials.");
+    console.error("Login Error:", err.response?.data);
+    alert(err.response?.data?.message || "Invalid Email or Password");
   }
 };
 
