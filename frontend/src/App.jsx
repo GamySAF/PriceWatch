@@ -40,7 +40,7 @@ function App() {
   const [showForm, setShowForm] = useState(false);
   const [products, setProducts] = useState([]);
   const [editingProduct, setEditingProduct] = useState(null);
-  const [theme, setTheme] = useState(() => localStorage.getItem("theme") || "light");
+  const [theme, setTheme] = useState(() => localStorage.getItem("theme") || "dark");
   const [token, setToken] = useState(localStorage.getItem("token"));
   const [userName, setUserName] = useState(localStorage.getItem("userName") || "");
 
@@ -122,12 +122,19 @@ const handleEditProduct = (product) => {
   }
 };
 
-  const toggleTheme = () => setTheme((prev) => (prev === "light" ? "dark" : "light"));
+useEffect(() => {
+  if (theme === "dark") {
+    document.documentElement.classList.add("dark");
+  } else {
+    document.documentElement.classList.remove("dark");
+  }
+  // Save choice for next visit
+  localStorage.setItem("theme", theme);
+}, [theme]);
 
-  useEffect(() => {
-    document.documentElement.classList.toggle("dark", theme === "dark");
-    localStorage.setItem("theme", theme);
-  }, [theme]);
+const toggleTheme = () => {
+  setTheme((prev) => (prev === "light" ? "dark" : "light"));
+};
 
 useEffect(() => {
   const fetchProducts = async () => {
@@ -160,22 +167,25 @@ useEffect(() => {
   const avgChange = products.length ? Math.round((totalChange / products.length) * 10) / 10 : 0;
 
   // --- RENDER HELPERS ---
+// --- RENDER HELPERS ---
   const Dashboard = () => (
-    <div className="min-h-screen bg-gray-100 dark:bg-gray-900 transition-colors duration-300">
-<Navbar 
-  theme={theme} 
-  toggleTheme={toggleTheme} 
- onAddProductClick={() => {
-  if (checkAuth()) setShowForm(true);
-}}
-  onLogout={handleLogout} 
-  userName={userName} 
-  token={token} // 👈 Add this so Navbar knows if someone is logged in
-/>
+    <div className="min-h-screen bg-[#F0F4F8] dark:bg-gray-900 transition-colors duration-300">
+      <Navbar 
+        theme={theme} 
+        toggleTheme={toggleTheme} 
+        onAddProductClick={() => {
+          if (checkAuth()) setShowForm(true);
+        }}
+        onLogout={handleLogout} 
+        userName={userName} 
+        token={token} 
+      />
+
       {showForm && (
-        <div className="fixed inset-0 bg-black bg-opacity-50 flex justify-center items-center z-50 p-4 overflow-auto">
-          <div className="bg-white rounded-xl p-4 sm:p-6 w-full max-w-sm sm:max-w-md relative shadow-lg border dark:bg-gray-900 dark:border-white">
-            <button className="absolute top-3 right-3 text-gray-500 dark:text-gray-200" onClick={() => { setShowForm(false); setEditingProduct(null); }}>✕</button>
+        <div className="fixed inset-0 bg-black/40 backdrop-blur-sm flex justify-center items-center z-50 p-4 overflow-auto">
+          {/* Light: Glassy | Dark: Solid gray-900 */}
+          <div className="bg-white/80 backdrop-blur-2xl dark:bg-gray-900 dark:backdrop-blur-none rounded-[2.5rem] p-6 w-full max-w-sm sm:max-w-md relative shadow-2xl border border-white dark:border-white">
+            <button className="absolute top-5 right-5 text-gray-400 dark:text-gray-200" onClick={() => { setShowForm(false); setEditingProduct(null); }}>✕</button>
             <AddProduct 
               handleAddProduct={editingProduct ? handleUpdateProduct : handleAddProduct} 
               initialData={editingProduct} 
@@ -186,22 +196,37 @@ useEffect(() => {
         </div>
       )}
 
-      <div className="w-full max-w-3xl mx-auto mt-8 space-y-4 px-4">
+      <div className="w-full max-w-3xl mx-auto mt-8 space-y-6 px-4 pb-20">
         <StatsSummary totalItems={products.length} avgChange={avgChange} />
+        
         {products.map((product) => {
           const isPositive = product.change > 0;
           const isNegative = product.change < 0;
-          const changeColor = isPositive ? "bg-red-100 text-red-600" : isNegative ? "bg-green-100 text-green-600" : "bg-gray-200 text-gray-700";
+          const changeColor = isPositive 
+            ? "bg-red-50/50 text-red-600 border-red-100/50 dark:bg-red-100 dark:text-red-600" 
+            : isNegative 
+            ? "bg-green-50/50 text-green-600 border-green-100/50 dark:bg-green-100 dark:text-green-600" 
+            : "bg-slate-100/50 text-slate-500 dark:bg-gray-200 dark:text-gray-700";
+
           return (
-            <div key={product._id} className="bg-white dark:bg-gray-800 p-4 rounded-2xl shadow-md flex flex-col sm:flex-row justify-between items-start sm:items-center w-full transition-colors">
+            /* Card Logic: 
+               Light Mode -> bg-white/70 + blur
+               Dark Mode  -> bg-gray-800 (Solid as you had it) 
+            */
+            <div key={product._id} className="bg-white/70 backdrop-blur-xl dark:bg-gray-800 dark:backdrop-blur-none p-6 rounded-[2rem] shadow-md border border-white/40 dark:border-none flex flex-col sm:flex-row justify-between items-start sm:items-center w-full transition-all">
               <div className="flex-1">
-                <h3 className="text-gray-800 dark:text-white font-semibold text-lg">{product.name}</h3>
-                <div className="flex items-center gap-2"><span className="dark:text-gray-200">💰 Current:</span><span className="text-green-600 font-bold">${product.currentPrice}</span></div>
-                <div className="flex items-center gap-2"><span className="dark:text-gray-200">🎯 Target:</span><span className="text-blue-600 font-bold">${product.targetPrice}</span></div>
-                <p className="text-blue-500 cursor-pointer text-sm" onClick={() => setSelectedProduct(product)}>View History</p>
+                <h3 className="text-slate-800 dark:text-white font-semibold text-lg">{product.name}</h3>
+                <div className="mt-2 flex flex-wrap gap-4 text-sm">
+                  <span className="text-slate-500 dark:text-gray-200">💰 Current: <span className="text-green-600 font-bold">${product.currentPrice}</span></span>
+                  <span className="text-slate-500 dark:text-gray-200">🎯 Target: <span className="text-blue-600 font-bold">${product.targetPrice}</span></span>
+                </div>
+                <p className="text-blue-500 cursor-pointer text-sm mt-2" onClick={() => setSelectedProduct(product)}>View History</p>
               </div>
+              
               <div className="flex items-center gap-2 mt-3 sm:mt-0">
-                <div className={`font-semibold px-3 py-1 rounded-full ${changeColor}`}>{isPositive ? '+' : ''}{product.change}%</div>
+                <div className={`font-semibold px-3 py-1 rounded-full ${changeColor}`}>
+                  {isPositive ? '+' : ''}{product.change}%
+                </div>
                 <button onClick={() => handleEditProduct(product)} className="text-blue-500 font-bold pl-2">Edit</button>
                 <button onClick={() => handleDeleteProduct(product._id)} className="text-red-500 font-bold pl-2">✕</button>
               </div>
@@ -210,15 +235,15 @@ useEffect(() => {
         })}
       </div>
 
-      {/* History Modal Logic stays exactly the same as your snippet... */}
       {selectedProduct && (
-         <div className="fixed inset-0 bg-black bg-opacity-60 flex justify-center items-center z-50 p-2">
-            <div className="bg-white dark:bg-gray-800 p-6 rounded-2xl w-full max-w-lg relative overflow-auto max-h-[90vh]">
+          <div className="fixed inset-0 bg-black/60 flex justify-center items-center z-50 p-2">
+            {/* Modal Logic: Solid for Dark Mode restored */}
+            <div className="bg-white/90 backdrop-blur-2xl dark:bg-gray-800 dark:backdrop-blur-none p-6 rounded-2xl w-full max-w-lg relative overflow-auto max-h-[90vh] border dark:border-none">
                 <button className="absolute top-4 right-4 text-2xl dark:text-white" onClick={() => setSelectedProduct(null)}>✕</button>
                 <h2 className="text-2xl font-bold mb-5 dark:text-white text-center">{selectedProduct.name} History</h2>
-                {/* Chart and list logic here... */}
+                {/* Your chart code here */}
             </div>
-         </div>
+          </div>
       )}
     </div>
   );

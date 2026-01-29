@@ -5,6 +5,14 @@
     <link rel="icon" type="image/svg+xml" href="src/assets/logo.jpg" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>PriceWatch Tracker </title>
+    <script>
+  // On page load, immediately apply dark mode to prevent flashing
+  if (localStorage.getItem('theme') === 'dark' || (!('theme' in localStorage))) {
+    document.documentElement.classList.add('dark');
+  } else {
+    document.documentElement.classList.remove('dark');
+  }
+</script>
   </head>
   <body>
     <div id="root"></div>
