@@ -2,7 +2,7 @@
 import axios from "axios";
 
 const API = axios.create({
-  // baseURL: "https://pricewatch-4n3q.onrender.com",
+
  baseURL: "https://pricewatch-4n3q.onrender.com",
 });
 

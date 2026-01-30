@@ -22,6 +22,11 @@ app.use(express.json());
 connectDB();
 
 
+// This route is public - no 'auth' middleware here!
+app.get('/health', (req, res) => {
+  res.status(200).json({ status: "ok", message: "Server is awake!" });
+});
+
 const auth = (req, res, next) => {
   try {
     const token = req.header('Authorization').replace('Bearer ', '');
