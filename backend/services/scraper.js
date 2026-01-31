@@ -3,12 +3,11 @@ const { chromium } = require('playwright');
 async function scrapePrice(url) {
   try { new URL(url); } catch (e) { return null; }
 
-const browser = await chromium.launch({ 
-  headless: true, // Try turning it back on with these args
-  args: [
-    '--disable-blink-features=AutomationControlled',
-  ]
-});
+  const browser = await chromium.launch({ 
+    headless: true, 
+    args: ['--disable-blink-features=AutomationControlled']
+  });
+
   const context = await browser.newContext({
     userAgent: 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36',
   });
@@ -17,37 +16,47 @@ const browser = await chromium.launch({
 
   try {
     console.log(`📡 Navigating to: ${url.substring(0, 40)}...`);
-    
-    // FIX: Use 'domcontentloaded' instead of 'networkidle' to avoid hanging
     await page.goto(url, { waitUntil: 'domcontentloaded', timeout: 30000 });
 
-    const priceSelectors = [
-      '.x-price-primary', '#prcIsum', '.a-price-whole', '.price_color',
-      'span:has-text("$")', '.price'
+    // 1. PRIORITY SELECTORS: These target the MAIN listing price only.
+    // eBay uses data-testid="x-price-primary" for the actual item price.
+    const prioritySelectors = [
+      'div[data-testid="x-price-primary"]', 
+      '#prcIsum',                           
+      '.x-price-primary'                    
     ];
 
-    console.log(`🔍 Looking for price tags...`);
-    
-    const combinedSelector = priceSelectors.join(', ');
-    
-    // Wait for the price to appear, but don't wait forever
-    await page.waitForSelector(combinedSelector, { timeout: 10000 });
-
     let priceText = null;
-    const elements = await page.$$(combinedSelector); // Find all potential matches
-    
-    for (const element of elements) {
-      const text = await element.innerText();
-      if (text && text.match(/\d/)) { // If it has a number, it's likely the price
-        priceText = text;
-        break;
+
+    // 2. Try to find the MAIN price first
+    for (const selector of prioritySelectors) {
+      try {
+        const element = await page.waitForSelector(selector, { timeout: 5000 });
+        if (element) {
+          priceText = await element.innerText();
+          console.log(`✅ Found Main Price via ${selector}: ${priceText}`);
+          break;
+        }
+      } catch (e) {
+        continue; // Try the next one if this fails
       }
     }
 
-    if (!priceText) throw new Error("Price element found but was empty");
+    // 3. FALLBACK: Only if priority selectors fail, look for anything price-like
+    if (!priceText) {
+      console.log("⚠️ Priority selectors failed, trying fallback...");
+      const fallbackSelector = '.a-price-whole, .price_color, span:has-text("$")';
+      priceText = await page.$eval(fallbackSelector, el => el.innerText).catch(() => null);
+    }
 
-    const cleanPrice = parseFloat(priceText.replace(/[^0-9.-]+/g, ""));
-    console.log(`💰 Scraped Price: ${cleanPrice}`);
+    if (!priceText) throw new Error("Price element not found");
+
+    // 4. CLEANING: Remove "US", "$", "ea", and spaces.
+    // This regex grabs only the digits and the decimal point.
+    const cleanPriceMatch = priceText.match(/\d+\.\d{2}/);
+    const cleanPrice = cleanPriceMatch ? parseFloat(cleanPriceMatch[0]) : null;
+
+    console.log(`💰 Final Scraped Price: ${cleanPrice}`);
     
     await browser.close();
     return cleanPrice;

@@ -7,6 +7,7 @@ const jwt = require('jsonwebtoken');
 const connectDB=require('./config/db')
 const Product=require('./models/product')
 const User=require("./models/User")
+const PORT = process.env.PORT || 3000;
 
 require('dotenv').config();
 
@@ -208,7 +209,7 @@ app.post('/login', async (req, res) => {
 
 
 
-const PORT = process.env.PORT || 5000;
+
 
 // 🚀 Start server
 app.listen(PORT, () => {
