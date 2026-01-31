@@ -94,7 +94,7 @@ const handleUpdateProduct = async (updatedProduct) => {
   }
 };
 
-  // PROFESSIONAL DELETE LOGIC
+  // PROFESSIONAL DELETE LOGIC Logic
   const handleDeleteProduct = (id) => {
     if (checkAuth()) {
       setItemToDelete(id); // Opens the Custom Modal instead of window.confirm
