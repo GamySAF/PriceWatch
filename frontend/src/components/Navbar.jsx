@@ -48,7 +48,7 @@ return (
         </button>
 }
 
-        {/* Toggle Dark Mode Button - Modern Minimalist */}
+        {/* Toggle Dark Mode Button - Modern Minimalis*/}
         <button
           onClick={toggleTheme}
           className="w-10 h-10 rounded-2xl bg-slate-100 dark:bg-gray-800 border border-slate-200 dark:border-gray-700 shadow-inner transform transition-all hover:rotate-12 flex items-center justify-center text-lg active:scale-90"
