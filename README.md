@@ -1,3 +1,4 @@
+
 # 📌 Price Watch — Price Tracker App
 
 ![React](https://img.shields.io/badge/React-Frontend-blue)
@@ -16,12 +17,12 @@ Price Watch is a full-stack web app that helps users **track product prices**, v
 
 - 🔐 Authentication (Signup / Login with token)
 - 📦 Add products to track
-- 📊 Price history chart
+- 📊 View price history chart
 - ✏️ Edit tracked products
 - 🗑️ Delete products
 - 🌙 Dark / Light mode
 - 🤖 Auto price scraping using **Playwright**
-- 🔔 Email notifications when price drops/changes
+- 🔔 Email notifications when price drops or changes
 
 ---
 
@@ -42,23 +43,88 @@ Price Watch is a full-stack web app that helps users **track product prices**, v
 - Playwright (scraper)
 - Nodemailer (email notifier)
 
----
-## 🚀 Getting Started
 
-### 1) Clone the repository and install dependencies
+
+
+## 🛠️ Installation & Setup
+
+Follow these steps to get **Price Watch** running locally:
+
+### 1. Clone the repository
 ```bash
-# Clone the repo
-git clone <your-repo-link>
-cd <your-project-folder>
+git clone https://github.com/your-username/pricewatch.git
+cd pricewatch
+````
 
-# -----------------------------
-# Frontend setup
-cd frontend
+---
+
+### 2. Setup the Backend
+
+```bash
+cd backend
+npm install
+```
+
+Create a `.env` file in the `backend` folder:
+
+```env
+PORT=5000
+MONGO_URI=your_mongodb_connection_string
+JWT_SECRET=your_secret_key
+
+EMAIL_USER=your_email@example.com
+EMAIL_PASS=your_email_password
+```
+
+Start the backend server:
+
+```bash
+npm start
+```
+
+* Backend API runs at `http://localhost:5000`
+* Handles authentication, product CRUD, price scraping, and email notifications
+
+---
+
+### 3. Setup the Frontend
+
+```bash
+cd ../frontend
 npm install
 npm run dev
+```
 
-# -----------------------------
-# Backend setup
-cd ../backend
-npm install
-npm start
+* Frontend dev server usually runs at `http://localhost:5173`
+* Connects automatically to the backend API
+
+---
+
+### 4. Open in Browser
+
+* Frontend: `http://localhost:5173`
+* Backend API (optional testing): `http://localhost:5000`
+
+---
+
+## 📌 How It Works
+
+1. User logs in and receives a token
+2. User adds a product URL to track
+3. Backend scrapes product prices using **Playwright**
+4. Price updates are stored in MongoDB
+5. If price changes → user receives email notification
+6. Users can view price history anytime on the dashboard
+
+---
+
+## 🌍 Deployment
+
+* Frontend → Vercel / Netlify
+* Backend → Render
+* Database → MongoDB Atlas
+
+---
+
+Made with by me
+
