@@ -126,5 +126,4 @@ npm run dev
 
 ---
 
-Made with by me
 
