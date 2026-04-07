@@ -11,7 +11,11 @@ const PORT = process.env.PORT || 3000;
 
 require('dotenv').config();
 
-app.use(cors());
+app.use(cors({
+  origin: "https://price-watch-teal.vercel.app", // Your Vercel frontend URL
+  methods: ["GET", "POST", "PUT", "DELETE"],
+  credentials: true // Optional, if you plan to send cookies
+}));
 app.use(express.json());
 
 
